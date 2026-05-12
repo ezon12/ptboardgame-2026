@@ -286,6 +286,7 @@ function selectMember(memberId) {
   renderQuickPanel();
   renderMembers();
   renderBadges();
+  $("#quickPanel").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 document.querySelectorAll(".tab").forEach((button) => {

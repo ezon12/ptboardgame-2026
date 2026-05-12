@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>평택 초등교사 보드게임 모험단 2026</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">수업 속 보드게임 성장 기록</p>
+          <h1>평택 초등교사 보드게임 모험단 2026</h1>
+        </div>
+        <button class="icon-button" id="resetDemo" title="초기화" aria-label="초기화">↻</button>
+      </section>
+
+      <section class="hero-panel">
+        <div class="hero-copy">
+          <p id="seasonLabel">23명의 교사 모험가</p>
+          <h2 id="guildSummary">수업 속 보드게임 여정</h2>
+        </div>
+        <div class="hero-medal">2026</div>
+      </section>
+
+      <nav class="tabbar" aria-label="화면 선택">
+        <button class="tab active" data-view="members">전체</button>
+        <button class="tab" data-view="log">기록</button>
+        <button class="tab" data-view="badges">배지</button>
+      </nav>
+
+      <section class="view active" id="membersView">
+        <div class="section-head">
+          <h2>한눈에 보기</h2>
+          <span id="memberCount">23명</span>
+        </div>
+        <div class="member-grid" id="memberGrid"></div>
+      </section>
+
+      <section class="view" id="logView">
+        <form class="quest-form" id="gameForm">
+          <div class="field-row">
+            <label>
+              이름
+              <select id="playerSelect" required></select>
+            </label>
+            <label>
+              장르
+              <select id="genreSelect" required>
+                <option>전략</option>
+                <option>파티</option>
+                <option>협력</option>
+                <option>추리</option>
+                <option>카드</option>
+                <option>주사위</option>
+                <option>교육</option>
+                <option>가족</option>
+              </select>
+            </label>
+          </div>
+          <label>
+            게임 이름
+            <input id="gameName" autocomplete="off" placeholder="예: 스플렌더" required />
+          </label>
+          <label>
+            같이 한 사람
+            <input id="companions" autocomplete="off" placeholder="예: 김서연, 박유진" required />
+          </label>
+          <button class="submit-button" type="submit">기록하기</button>
+        </form>
+
+        <div class="section-head compact">
+          <h2>최근 기록</h2>
+          <span id="logCount">0개</span>
+        </div>
+        <div class="log-list" id="logList"></div>
+      </section>
+
+      <section class="view" id="badgesView">
+        <div class="section-head">
+          <h2>배지 장착</h2>
+          <select id="badgeMemberSelect"></select>
+        </div>
+        <div class="badge-board" id="badgeBoard"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

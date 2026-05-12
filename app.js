@@ -1,4 +1,5 @@
 const STORAGE_KEY = "pyeongtaek-teacher-boardgame-2026-v1";
+const API_URL = window.BOARDGAME_API_URL || "";
 
 const names = [
   "강예원",
@@ -70,6 +71,7 @@ const initialState = {
 let state = loadState();
 let editingLogId = null;
 let selectedMemberId = null;
+let syncState = API_URL ? "loading" : "local";
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -89,6 +91,75 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  saveRemoteState();
+}
+
+async function loadRemoteState() {
+  if (!API_URL) return;
+  setSyncState("loading");
+
+  try {
+    const response = await fetch(`${API_URL}?action=load&t=${Date.now()}`);
+    if (!response.ok) throw new Error("load failed");
+    const remoteState = await response.json();
+    if (remoteState?.members?.length && Array.isArray(remoteState.logs)) {
+      state = {
+        members: remoteState.members,
+        logs: remoteState.logs,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setSyncState("online");
+      render();
+      return;
+    }
+    await saveRemoteState();
+  } catch {
+    setSyncState("error");
+  }
+}
+
+async function saveRemoteState() {
+  if (!API_URL) {
+    setSyncState("local");
+    return;
+  }
+
+  try {
+    setSyncState("saving");
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(state),
+    });
+    if (!response.ok) throw new Error("save failed");
+    setSyncState("online");
+  } catch {
+    setSyncState("error");
+  }
+}
+
+function setSyncState(nextState) {
+  syncState = nextState;
+  const label = $("#syncStatus");
+  if (!label) return;
+
+  label.classList.remove("online", "offline", "error");
+  if (syncState === "online") {
+    label.textContent = "공용 저장소 연결됨";
+    label.classList.add("online");
+  } else if (syncState === "saving") {
+    label.textContent = "공용 저장소 저장 중";
+    label.classList.add("online");
+  } else if (syncState === "loading") {
+    label.textContent = "공용 저장소 불러오는 중";
+    label.classList.add("offline");
+  } else if (syncState === "error") {
+    label.textContent = "공용 저장소 연결 확인 필요";
+    label.classList.add("error");
+  } else {
+    label.textContent = "이 기기에만 저장 중";
+    label.classList.add("offline");
+  }
 }
 
 function playsFor(memberId) {
@@ -413,3 +484,5 @@ $("#resetAll").addEventListener("click", () => {
 });
 
 render();
+setSyncState(syncState);
+loadRemoteState();

@@ -152,6 +152,32 @@ h2 {
   font-weight: 900;
 }
 
+.sync-status {
+  display: inline-block;
+  margin: 7px 0 0;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.sync-status.online {
+  background: #e7f7ef;
+  color: var(--leaf-dark);
+}
+
+.sync-status.offline {
+  background: #fff3d6;
+  color: #775600;
+}
+
+.sync-status.error {
+  background: #fff0ee;
+  color: #b4493e;
+}
+
 .board-progress {
   width: 116px;
   flex: 0 0 116px;

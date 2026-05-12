@@ -68,14 +68,22 @@ const initialState = {
 };
 
 let state = loadState();
+let editingLogId = null;
 
 const $ = (selector) => document.querySelector(selector);
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) return JSON.parse(saved);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(initialState));
-  return structuredClone(initialState);
+  if (!saved) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialState));
+    return structuredClone(initialState);
+  }
+
+  const parsed = JSON.parse(saved);
+  return {
+    members: parsed.members?.length ? parsed.members : structuredClone(initialState.members),
+    logs: parsed.logs ?? [],
+  };
 }
 
 function saveState() {
@@ -101,6 +109,7 @@ function levelFor(count) {
 
 function render() {
   renderHero();
+  renderLevelGuide();
   renderMemberOptions();
   renderMembers();
   renderLogs();
@@ -110,9 +119,32 @@ function render() {
 function renderHero() {
   const totalGames = state.logs.length;
   const totalBadges = state.members.reduce((sum, member) => sum + member.badges.length, 0);
+  const progressScore = totalGames * 2 + totalBadges;
+  const targetScore = 60;
+  const progressPercent = Math.min(100, Math.round((progressScore / targetScore) * 100));
+  const filledTiles = Math.min(9, Math.floor((progressPercent / 100) * 9));
   $("#memberCount").textContent = `${state.members.length}명`;
   $("#seasonLabel").textContent = `평택 초등교사 ${state.members.length}명`;
   $("#guildSummary").textContent = `${totalGames}개 게임 기록 · ${totalBadges}개 배지 장착`;
+  $("#meterFill").style.width = `${Math.max(progressPercent, totalGames || totalBadges ? 8 : 0)}%`;
+  $("#meterCaption").textContent =
+    progressScore === 0
+      ? "첫 칸을 기다리는 중"
+      : `모험판 ${progressPercent}% 충전 · 기록 1개는 2칸 힘`;
+  $("#boardProgress").innerHTML = Array.from({ length: 9 }, (_, index) => {
+    const filled = index < filledTiles || (progressScore > 0 && index === 0);
+    const current = filled && index === Math.max(0, filledTiles - 1);
+    return `<div class="board-tile ${filled ? "filled" : ""} ${current ? "current" : ""}">${index + 1}</div>`;
+  }).join("");
+}
+
+function renderLevelGuide() {
+  $("#levelGuide").innerHTML = levels
+    .map((level, index) => {
+      const label = level.count === 0 ? "시작" : `${level.count}개`;
+      return `<div class="level-chip"><strong>Lv.${index + 1}</strong><span>${label}</span></div>`;
+    })
+    .join("");
 }
 
 function renderMemberOptions() {
@@ -127,7 +159,7 @@ function renderMembers() {
       const count = playsFor(member.id).length;
       const level = levelFor(count);
       const badgeCount = member.badges.length;
-      const avatar = avatars[member.avatar];
+      const avatar = avatars[member.avatar] ?? avatars[0];
       return `
         <article class="member-card" title="${avatar.title} · 게임 ${count}개 · 배지 ${badgeCount}개">
           <div class="avatar-stage">
@@ -165,6 +197,10 @@ function renderLogs() {
           </div>
           <p class="meta-line">${member?.name ?? "알 수 없음"} · ${log.companions}</p>
           <p class="meta-line">${log.date}</p>
+          <div class="log-actions">
+            <button class="small-button" data-edit="${log.id}">수정</button>
+            <button class="small-button delete" data-delete="${log.id}">삭제</button>
+          </div>
         </article>
       `;
     })
@@ -198,6 +234,25 @@ function todayText() {
   return `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")}`;
 }
 
+function setEditingMode(log) {
+  editingLogId = log.id;
+  $("#playerSelect").value = log.memberId;
+  $("#genreSelect").value = log.genre;
+  $("#gameName").value = log.game;
+  $("#companions").value = log.companions;
+  $("#editBanner").hidden = false;
+  $("#submitLog").textContent = "수정 저장";
+  $("#gameName").focus();
+}
+
+function clearForm() {
+  editingLogId = null;
+  $("#gameName").value = "";
+  $("#companions").value = "";
+  $("#editBanner").hidden = true;
+  $("#submitLog").textContent = "기록하기";
+}
+
 document.querySelectorAll(".tab").forEach((button) => {
   button.addEventListener("click", () => {
     document.querySelectorAll(".tab, .view").forEach((item) => item.classList.remove("active"));
@@ -208,21 +263,52 @@ document.querySelectorAll(".tab").forEach((button) => {
 
 $("#gameForm").addEventListener("submit", (event) => {
   event.preventDefault();
-  state.logs.push({
-    id: crypto.randomUUID(),
+  const payload = {
     memberId: $("#playerSelect").value,
     game: $("#gameName").value.trim(),
     companions: $("#companions").value.trim(),
     genre: $("#genreSelect").value,
-    date: todayText(),
-  });
+  };
+
+  if (editingLogId) {
+    state.logs = state.logs.map((log) =>
+      log.id === editingLogId ? { ...log, ...payload } : log
+    );
+  } else {
+    state.logs.push({
+      id: crypto.randomUUID(),
+      ...payload,
+      date: todayText(),
+    });
+  }
+
   saveState();
-  $("#gameName").value = "";
-  $("#companions").value = "";
+  clearForm();
   render();
 });
 
+$("#cancelEdit").addEventListener("click", clearForm);
 $("#badgeMemberSelect").addEventListener("change", renderBadges);
+
+$("#logList").addEventListener("click", (event) => {
+  const editButton = event.target.closest("button[data-edit]");
+  const deleteButton = event.target.closest("button[data-delete]");
+
+  if (editButton) {
+    const log = state.logs.find((item) => item.id === editButton.dataset.edit);
+    if (log) setEditingMode(log);
+    return;
+  }
+
+  if (deleteButton) {
+    const ok = confirm("이 기록을 삭제할까요?");
+    if (!ok) return;
+    state.logs = state.logs.filter((log) => log.id !== deleteButton.dataset.delete);
+    if (editingLogId === deleteButton.dataset.delete) clearForm();
+    saveState();
+    render();
+  }
+});
 
 $("#badgeBoard").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-badge]");
@@ -239,9 +325,12 @@ $("#badgeBoard").addEventListener("click", (event) => {
   render();
 });
 
-$("#resetDemo").addEventListener("click", () => {
+$("#resetAll").addEventListener("click", () => {
+  const ok = confirm("전체 기록과 배지를 모두 지울까요? 이 작업은 되돌릴 수 없어요.");
+  if (!ok) return;
   state = structuredClone(initialState);
   saveState();
+  clearForm();
   render();
 });
 

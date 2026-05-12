@@ -13,15 +13,19 @@
           <p class="eyebrow">수업 속 보드게임 성장 기록</p>
           <h1>평택 초등교사 보드게임 모험단 2026</h1>
         </div>
-        <button class="icon-button" id="resetDemo" title="초기화" aria-label="초기화">↻</button>
+        <button class="icon-button danger" id="resetAll" title="전체 기록 초기화" aria-label="전체 기록 초기화">!</button>
       </section>
 
       <section class="hero-panel">
         <div class="hero-copy">
           <p id="seasonLabel">23명의 교사 모험가</p>
           <h2 id="guildSummary">수업 속 보드게임 여정</h2>
+          <div class="guild-meter" aria-label="모험판 진행도">
+            <span id="meterFill"></span>
+          </div>
+          <p class="meter-caption" id="meterCaption">첫 칸을 기다리는 중</p>
         </div>
-        <div class="hero-medal">2026</div>
+        <div class="board-progress" id="boardProgress" aria-label="모임 성장 말판"></div>
       </section>
 
       <nav class="tabbar" aria-label="화면 선택">
@@ -35,11 +39,16 @@
           <h2>한눈에 보기</h2>
           <span id="memberCount">23명</span>
         </div>
+        <div class="level-guide" id="levelGuide"></div>
         <div class="member-grid" id="memberGrid"></div>
       </section>
 
       <section class="view" id="logView">
         <form class="quest-form" id="gameForm">
+          <div class="edit-banner" id="editBanner" hidden>
+            <span>기록 수정 중</span>
+            <button type="button" id="cancelEdit">취소</button>
+          </div>
           <div class="field-row">
             <label>
               이름
@@ -67,7 +76,7 @@
             같이 한 사람
             <input id="companions" autocomplete="off" placeholder="예: 김서연, 박유진" required />
           </label>
-          <button class="submit-button" type="submit">기록하기</button>
+          <button class="submit-button" id="submitLog" type="submit">기록하기</button>
         </form>
 
         <div class="section-head compact">

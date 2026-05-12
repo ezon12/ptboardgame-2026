@@ -17,6 +17,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -258,6 +262,57 @@ h2 {
   font-weight: 900;
 }
 
+.quick-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(45, 138, 114, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 7px 18px rgba(55, 79, 70, 0.07);
+}
+
+.quick-panel strong,
+.quick-panel span {
+  display: block;
+}
+
+.quick-panel strong {
+  font-size: 15px;
+}
+
+.quick-panel span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.quick-actions button {
+  min-height: 34px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--leaf);
+  color: white;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.quick-actions button:last-child {
+  background: var(--sun);
+  color: #563e00;
+}
+
 .member-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -279,6 +334,13 @@ h2 {
   padding: 7px 5px;
   border-radius: 14px;
   text-align: center;
+  cursor: pointer;
+}
+
+.member-card.selected {
+  border-color: var(--leaf);
+  background: linear-gradient(145deg, rgba(237, 247, 244, 0.96), rgba(255, 246, 217, 0.96));
+  box-shadow: 0 0 0 3px rgba(45, 138, 114, 0.12);
 }
 
 .avatar-stage {
@@ -590,5 +652,14 @@ select:focus {
 
   .level-guide {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quick-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-actions button {
+    flex: 1;
   }
 }

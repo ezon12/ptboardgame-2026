@@ -69,6 +69,7 @@ const initialState = {
 
 let state = loadState();
 let editingLogId = null;
+let selectedMemberId = null;
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -111,6 +112,7 @@ function render() {
   renderHero();
   renderLevelGuide();
   renderMemberOptions();
+  renderQuickPanel();
   renderMembers();
   renderLogs();
   renderBadges();
@@ -151,6 +153,24 @@ function renderMemberOptions() {
   const options = state.members.map((member) => `<option value="${member.id}">${member.name}</option>`).join("");
   $("#playerSelect").innerHTML = options;
   $("#badgeMemberSelect").innerHTML = options;
+  if (selectedMemberId && state.members.some((member) => member.id === selectedMemberId)) {
+    $("#playerSelect").value = selectedMemberId;
+    $("#badgeMemberSelect").value = selectedMemberId;
+  }
+}
+
+function renderQuickPanel() {
+  const member = state.members.find((item) => item.id === selectedMemberId);
+  if (!member) {
+    $("#quickPanel").hidden = true;
+    return;
+  }
+
+  const count = playsFor(member.id).length;
+  const badgeCount = member.badges.length;
+  $("#quickPanel").hidden = false;
+  $("#quickName").textContent = `${member.name} 선택됨`;
+  $("#quickMeta").textContent = `게임 ${count}개 · 배지 ${badgeCount}개`;
 }
 
 function renderMembers() {
@@ -161,7 +181,7 @@ function renderMembers() {
       const badgeCount = member.badges.length;
       const avatar = avatars[member.avatar] ?? avatars[0];
       return `
-        <article class="member-card" title="${avatar.title} · 게임 ${count}개 · 배지 ${badgeCount}개">
+        <article class="member-card ${selectedMemberId === member.id ? "selected" : ""}" data-member="${member.id}" role="button" tabindex="0" title="${avatar.title} · 게임 ${count}개 · 배지 ${badgeCount}개">
           <div class="avatar-stage">
             <div class="avatar level-${level.number}">${avatar.face}</div>
           </div>
@@ -253,12 +273,55 @@ function clearForm() {
   $("#submitLog").textContent = "기록하기";
 }
 
+function switchView(viewName) {
+  document.querySelectorAll(".tab, .view").forEach((item) => item.classList.remove("active"));
+  document.querySelector(`.tab[data-view="${viewName}"]`).classList.add("active");
+  $(`#${viewName}View`).classList.add("active");
+}
+
+function selectMember(memberId) {
+  selectedMemberId = memberId;
+  $("#playerSelect").value = memberId;
+  $("#badgeMemberSelect").value = memberId;
+  renderQuickPanel();
+  renderMembers();
+  renderBadges();
+}
+
 document.querySelectorAll(".tab").forEach((button) => {
   button.addEventListener("click", () => {
-    document.querySelectorAll(".tab, .view").forEach((item) => item.classList.remove("active"));
-    button.classList.add("active");
-    $(`#${button.dataset.view}View`).classList.add("active");
+    switchView(button.dataset.view);
   });
+});
+
+$("#memberGrid").addEventListener("click", (event) => {
+  const card = event.target.closest("[data-member]");
+  if (!card) return;
+  selectMember(card.dataset.member);
+});
+
+$("#memberGrid").addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const card = event.target.closest("[data-member]");
+  if (!card) return;
+  event.preventDefault();
+  selectMember(card.dataset.member);
+});
+
+$("#quickPanel").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-quick]");
+  if (!button || !selectedMemberId) return;
+
+  if (button.dataset.quick === "log") {
+    switchView("log");
+    $("#playerSelect").value = selectedMemberId;
+    $("#gameName").focus();
+    return;
+  }
+
+  switchView("badges");
+  $("#badgeMemberSelect").value = selectedMemberId;
+  renderBadges();
 });
 
 $("#gameForm").addEventListener("submit", (event) => {
@@ -289,6 +352,20 @@ $("#gameForm").addEventListener("submit", (event) => {
 
 $("#cancelEdit").addEventListener("click", clearForm);
 $("#badgeMemberSelect").addEventListener("change", renderBadges);
+$("#playerSelect").addEventListener("change", (event) => {
+  selectedMemberId = event.target.value;
+  $("#badgeMemberSelect").value = selectedMemberId;
+  renderQuickPanel();
+  renderMembers();
+});
+
+$("#badgeMemberSelect").addEventListener("change", (event) => {
+  selectedMemberId = event.target.value;
+  $("#playerSelect").value = selectedMemberId;
+  renderQuickPanel();
+  renderMembers();
+  renderBadges();
+});
 
 $("#logList").addEventListener("click", (event) => {
   const editButton = event.target.closest("button[data-edit]");
